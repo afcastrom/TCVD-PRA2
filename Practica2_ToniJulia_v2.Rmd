@@ -1,0 +1,274 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+  ```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1 Càrrega de l’arxiu de dades i breu descripció
+  
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+
+## 1 Càrrega de l’arxiu de dades i breu descripció
+
+  
+```{r Read, message=FALSE, warning=FALSE, paged.print=TRUE}
+#Llibreria per a crear taules resum
+library(knitr)
+library(kableExtra)
+#Lliberia readr per llegir
+library(readr)
+library(plyr)
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+library(nortest)
+
+
+
+
+FitxerCotxe <- read.csv(file="Audis A3.csv", fill = TRUE, encoding="UTF-8", stringsAsFactors = F)
+```
+
+Una vegada realitzada la càrrega, volem conèixer quantes files i columnes conté el nostre fitxer:
+
+```{r}
+
+summary(FitxerCotxe)
+
+str(FitxerCotxe)
+
+cat("Files i columnes","\n")
+nrow(FitxerCotxe)
+ncol(FitxerCotxe)
+
+```
+
+# 2 Integració i selecció de les dades
+
+Eliminem la variable 'fecha' y 'modelo'. No ens aporta informació.
+
+```{r}
+FitxerCotxe <- FitxerCotxe [,c(-1:-2)]
+
+head(FitxerCotxe)
+```
+
+
+
+
+
+
+
+# Modificamos variable combustible a G y D
+# Modificamos variable cambio a A y M
+
+```{r}
+FitxerCotxe[FitxerCotxe$Cambio == "Manual", "Cambio"] = "M"
+
+FitxerCotxe[(str_which(FitxerCotxe$Cambio, "Autom")), "Cambio"] = "A"
+FitxerCotxe[(str_which(FitxerCotxe$Combustible, "Di")), "Combustible"] = "D"
+
+FitxerCotxe[FitxerCotxe$Combustible == "Gasolina", "Combustible"] = "G"
+
+FitxerCotxe$Cambio <- as.factor (FitxerCotxe$Cambio)
+FitxerCotxe$Combustible <- as.factor(FitxerCotxe$Combustible)
+```
+
+
+# Transformem la variable potència
+
+```{r}
+
+#Convertirm la variable Motor i ens quedem sols amb la part numèrcia de KW
+FitxerCotxe$Potencia<-str_extract(FitxerCotxe$Potencia,"\\d+")
+FitxerCotxe$Potencia <- as.integer(FitxerCotxe$Potencia)
+
+
+head(FitxerCotxe)
+
+```
+
+
+#Verifiquem valors perduts
+
+
+#Convertimos a NA los valores desconocidos de las variables Versión (n/a) y Cambio (-/-) reconvertimos a Factor. No queremos perder el resto de datos del vehiculo.
+
+```{r}
+FitxerCotxe[FitxerCotxe$Version == "n/a", "Version"] = NA
+FitxerCotxe$Version <- as.factor (FitxerCotxe$Version)
+FitxerCotxe[(str_which(FitxerCotxe$Cambio, "-/-")), "Cambio"] = NA
+
+```
+
+
+```{r}
+
+
+#Comprovem valors perduts
+ValorsPerduts <- colSums(is.na(FitxerCotxe))
+ValorsPerduts
+
+
+```
+
+# 3.2 Tratamiento valores extremos: Variable Potencia
+
+Filas 256 y 257. Se interpreta como error y se deja como NA 
+
+```{r}
+FitxerCotxe[FitxerCotxe$Potencia == 1, "Potencia"] = NA
+```
+
+
+
+
+```{r}
+
+#Año
+
+FitxerCotxe$Año <- make_date(year = str_extract(FitxerCotxe$Año, "....$"), month = str_extract(FitxerCotxe$Año, "^.."))
+
+```
+
+```{r}
+
+
+#kilometres; convertimos a Kms
+
+FitxerCotxe$Kilometraje <- as.integer (FitxerCotxe$Kilometraje*1000)
+  
+summary(FitxerCotxe)
+```
+
+```{r}
+
+
+#modelo y version
+
+FitxerCotxe$Version <- as.factor (FitxerCotxe$Version)
+
+```
+
+
+```{r}
+
+
+#Verifiquem si hi ha  registres duplicats
+#Files
+nrow(FitxerCotxe)
+#Files diferents
+count(distinct(FitxerCotxe))
+
+summary(FitxerCotxe)
+
+```
+
+
+Modificamos variable Ciudad a Código Postal Provincial (xx)
+
+
+```{r}
+
+FitxerCotxe[, "Ciudad"] = str_extract(FitxerCotxe$Ciudad, "^..")
+
+FitxerCotxe$Ciudad <- as.factor (FitxerCotxe$Ciudad)
+
+```
+
+
+
+
+
+# Generamos Fichero Audis Procesados. FAP
+
+```{r}
+
+FAP <- subset(FitxerCotxe)
+
+write.csv(FitxerCotxe, "FAP.csv")
+```
+
+
+```{r}
+
+# 4.1. Agrupación por tipo de combustible
+
+FAP_d <- FAP[FAP$Combustible == "D",] 
+FAP_g <- FAP[FAP$Combustible == "G",]
+
+
+```
+
+
+
+# 4.2 Comprobacion de la Normalidad y Variancia
+
+NORMALIDAD
+```{r}
+
+
+ad.test(FAP$Precio) 
+ad.test(FAP$Kilometraje) 
+ad.test(FAP$Potencia) 
+
+              
+
+```
+
+Kilometraje presenta distribución Normal. 
+
+
+HOMOGENEIDAD EN LA VARIANZA (HOMOCEDASTICIDAD)
+Para muestras no Normales -Precio-
+```{r}
+
+fligner.test(x = list(FAP_d$Precio,FAP_g$Precio))
+```
+Como P-Valor > 0.05 --> aceptamos hipótesis que las 2 muestras son homogeneas 
+
+
+
+# 4.3.1 Son mas caros las A3s Gasolina que los Diesel...? Contraste de Hipotesis
+
+
+```{r}
+
+
+CH_pd <- subset (FAP, Combustible == "D", select = "Precio")
+CH_pg <- subset (FAP, Combustible == "G", select = "Precio") 
+
+
+
+
+
+
+boxplot(CH_pd$Precio,CH_pg$Precio,main="Diagrama de caja de Precio Gasolina/Diesel",names=c("Diesel","Gasolina"))
+
+
+```
+
+
+
+
+
+## Contraste de hipotesis unilateral de dos muestras sobre la diferencia de medias.
+
+
+
+
+
+
+
+
+
