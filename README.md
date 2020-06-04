@@ -1,35 +1,39 @@
-# TCVD-PRA2
-CochesVentaScrap
+# Precios Audis A3
 
-Descripcion script
-Permite extraer la información de coches en venta de particulares, en una web de segunda mano , con el fin de poder aportar información a un posible vendedor.
+## Descripcion script
 
-Los paramétros de entrada serán los siguientes:
+Se pretende responder a una serie de preguntan en relación con el precio de venta de segunda mano de los Audi A3, A partir de un fichero de datos extraido de la Web de compra/venta de coches (www.autoscout24.es) en la PRACTICA 1, aplicando tecnicas de carga, integracion y limpieza; a partir de aqui se genrera un fichero de salida sobre el que se realizará el analisis y visualizacion de datos aprendidas en esta asignatura. 
 
-Marca: Marca del coche a buscar (Obligatorio)
-Modelo: Modelo del coche a buscar (Obligatorio)
-Año inicio y fin: Rangos de fecha del coche a buscar (Opcional)
-Versión: Versión del coche a buscar (Opcional)
-Bibliotecas necesarias para ejecutar el script
-El desarrollo del script se ha realizado en phyton y se necesita instalar las bibliotecas siguientes:
 
-import os
-import csv
-import argparse
-from bs4 import BeautifulSoup
-import requests
-import sys
-from datetime import datetime
-Ejecución
-La ejecución del script se realizará de la siguiente forma:
+Fichero de Entrada : Audis A3.csv (260 observaciones de 10 variables)
 
-python foodPriceScraper.py Marca Modelo inicio fin version
-Se muestra ejemplos de llamadas:
+Fichero de Salida : FAP.csv (258 observaciones de 9 variables)
 
-python foodpricescraper.py BMW i3
-python foodpricescraper.py AUDI A3 2015 2015
-Extración a fichero
-Se genera un fichero de salida en formato .csv con los siguientes datos: Fecha Modelo Versión Precio Kilometraje Mes/Año Potencia Cambio Combustible Ciudad
 
-Integrantes
-La práctica ha sido realizada por Julia Soler (jsolerni@uoc.edu) & Antonio Castro (acastrom@uoc.edu).
+## Bibliotecas necesarias para ejecutar el script
+
+El desarrollo del script se ha realizado en R y se necesita instalar las librerias siguientes:
+
+library(knitr)
+library(kableExtra)
+library(readr)
+library(plyr)
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+library(nortest)
+
+
+## Ejecución
+
+
+    
+    
+## Extración a fichero
+
+Se genera un fichero HTML como informe de salida
+   
+   
+## Integrantes   
+   La práctica ha sido realizada por Julia Soler (jsolerni@uoc.edu)  & Antonio Castro (acastrom@uoc.edu).
+   
