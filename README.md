@@ -14,13 +14,13 @@ Fichero de Salida : FAP.csv (258 observaciones de 9 variables)
 
 El desarrollo del script se ha realizado en R y se necesita instalar las librerias siguientes:
 
-library(knitr)
+ library(knitr)
 library(kableExtra)
-library(readr)
+ library(readr)
 library(plyr)
-library(dplyr)
+ library(dplyr)
 library(tidyverse)
-library(lubridate)
+ library(lubridate)
 library(nortest)
 
 
