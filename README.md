@@ -2,7 +2,7 @@
 
 ## Descripcion script
 
-Se pretende responder a una serie de preguntan en relación con el precio de venta de segunda mano de los Audi A3, A partir de un fichero de datos extraido de la Web de compra/venta de coches (www.autoscout24.es) en la PRACTICA 1, aplicando tecnicas de carga, integracion y limpieza; a partir de aqui se genrera un fichero de salida sobre el que se realizará el analisis y visualizacion de datos aprendidas en esta asignatura. 
+Se pretende responder a una serie de preguntan en relación con el precio de venta de segunda mano de los Audi A3. A partir de un fichero de datos extraido de la Web de compra/venta de coches (www.autoscout24.es) en la PRACTICA 1, aplicando tecnicas de carga, integracion y limpieza; se genrera un fichero de salida sobre el que se realizará el analisis y la visualizacion de datos. 
 
 
 Fichero de Entrada : Audis A3.csv (260 observaciones de 10 variables)
