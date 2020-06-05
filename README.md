@@ -14,8 +14,8 @@ Fichero de Salida : FAP.csv (258 observaciones de 9 variables)
 
 El desarrollo del script se ha realizado en R y se necesita instalar las librerias siguientes:
 
- library(knitr)
-   library(kableExtra)
+  library(knitr)
+  ºlibrary(kableExtra)
  library(readr)
  library(plyr)
  library(dplyr)
@@ -31,7 +31,7 @@ El desarrollo del script se ha realizado en R y se necesita instalar las libreri
     
 ## Extración a fichero
 
-Se genera un fichero HTML como informe de salida
+   Se genera un fichero HTML como informe de salida
    
    
 ## Integrantes   
