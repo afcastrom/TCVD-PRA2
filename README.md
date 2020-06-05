@@ -7,8 +7,8 @@ Se pretende responder a una serie de preguntas que buscan relacionar una serie d
 A partir de nuestro script creado en la PRACTICA 1, obtenemos un fichero CSV que contiene datos extraidos de la Web de compra/venta de coches (www.autoscout24.es); aplicando tecnicas de carga, integracion y limpieza obtenemos un fichero sobre el que se realizar el analisis y la visualizacion de datos. 
 
 
-Fichero de Entrada :   Audis A3.csv   (260 observaciones de 10 variables)
-Fichero de Salida :    FAP.csv        (258 observaciones de 9 variables)
+* Fichero de Entrada :   Audis A3.csv   (260 observaciones de 10 variables)
+* Fichero de Salida :    FAP.csv        (258 observaciones de 9 variables)
 
 
 ## Bibliotecas necesarias para ejecutar el script
