@@ -1,0 +1,381 @@
+  
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+  html_notebook:
+    toc: yes
+---
+
+
+  ```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+  
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# 1. Introducció
+## 1.1 Objectius 
+En la pràtica1 de l'assignatura de Tipologia i cicle de vida de les dades, es va realitzar programa per a extreure dades a un fitxer .csv d'una pàgina web de cotxes de segona mà, mitjançant web scraping.
+
+-Utilitzarem aquest fitxer generat per a complir els objectius d'aquesta pràctica: 
+
+-Aprendre a aplicar els coneixements adquirits i la seva capacitat de resolució de problemes en entorns nous o poc coneguts dintre de contextos més amplis o multidisciplinaris.
+
+-Saber identificar les dades rellevants i els tractaments necessaris (integració, neteja i validació) per dur a terme un projecte analític.
+
+-Aprendre a analitzar les dades adequadament per abordar la informació continguda en les dades.
+Identificar la millor representació dels resultats per tal d’aportar conclusions sobre el problema plantejat en el procés analític.
+
+-Actuar amb els principis ètics i legals relacionats amb la manipulació de dades en funció de l'àmbit d'aplicació.
+
+-Desenvolupar les habilitats d'aprenentatge que els permetin continuar estudiant d'una manera que haurà de ser en gran manera autodirigida o autònoma.
+
+-Desenvolupar la capacitat de cerca, gestió i ús d'informació i recursos en l'àmbit de la ciència de dades.
+ 
+## 1.2 Descripció del dataset
+
+Per a realitzar l'estudi es seleccionen tots els cotxes A3 de segona ma de la pàgina https://www.autoscout24.es/.
+
+Recordem els atributs del fitxer:
+
+•	Fecha extracció de dades
+•	Año: Any/mes de la matriculación
+•	Marca: Fabricant del vehicle
+•	modelo: Model
+•	Versión: Versió detallada del vehicle
+•	Precio: PVP de vehicle
+•	Kilómetros: Km recorreguts
+•	Tipo: Tipus de canvi
+•	Combustible: Gasolina, diésel, elèctirc.
+•	Ciudad: LLoc de venda del cotxe
+
+
+# 2.3 Netetja de dades 
+## 2.3.1 Càrrega de l’arxiu de dades i breu descripció
+Primerament es realitza la lectura del fitxer .csv amb la funció read.csv:
+  
+```{r Read, message=FALSE, warning=FALSE, paged.print=TRUE}
+#Llibreria per a crear taules resum
+library(knitr)
+library(kableExtra)
+#Lliberia readr per llegir
+library(readr)
+library(plyr)
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+library(nortest)
+FitxerCotxe <- read.csv(file="Audis A3.csv", fill = TRUE, encoding="UTF-8", stringsAsFactors = F)
+```
+
+Una vegada realitzada la càrrega, volem conèixer quantes files i columnes conté el nostre fitxer i el tipus de dades que ha interpretat R:
+
+```{r}
+summary(FitxerCotxe)
+str(FitxerCotxe)
+cat("\n")
+cat("Files i columnes","\n")
+nrow(FitxerCotxe)
+ncol(FitxerCotxe)
+```
+Es pot deduir del resum realitzat, hi ha que fer transformació i netetja de les variables per a poder utilitzar-les al nostre estudi.
+Per exemple, la Potència R la interpreta com caràcter perquè está composta d'un numèric + caràcter.
+Tractarem de factoritzar i convertir les dades al tipus de dades correcte i necessari per a realitzar l'estudi. 
+
+## 2.3.2 Integració i selecció de les dades
+Tenim un fitxer amb pocs atributs, concretament 10. Amb el resum de dades realitzat a l'apartat anterior, hem observat que quasi totes les variables del fitxer, poden ser útils per a realitzar l'estudi. 
+
+Observem que la variable 'fecha' té un únic valor i es trata de data d'extracció de les dades i que nos ens afegeix informació.
+
+La variable 'Modelo', está informada amb tots els possibles modelos del cotxe A3. Aquest camp tampoc ens aportará valor a l'estudi. 
+
+Per aquests motius eliminarem les variables 'fecha' i 'Version'
+
+
+```{r}
+#S'eliminen les variables fecha i Version. Les dos primeres variables
+FitxerCotxe <- FitxerCotxe [,c(-1:-2)]
+```
+
+
+
+## 2.3.3 Transformació de dades
+
+S'efectua la transformació de dades per a que pugin ser tratades en l'estudi.
+
+Variables 'combustible' i 'cambio'. 
+
+Es realitzará una conversió i es factoritzarán:
+
+```{r}
+
+# variable combustible a G y D
+FitxerCotxe[FitxerCotxe$Cambio == "Manual", "Cambio"] = "M"
+FitxerCotxe[(str_which(FitxerCotxe$Cambio, "Autom")), "Cambio"] = "A"
+FitxerCotxe[(str_which(FitxerCotxe$Combustible, "Di")), "Combustible"] = "D"
+FitxerCotxe[FitxerCotxe$Combustible == "Gasolina", "Combustible"] = "G"
+#Factoritza
+FitxerCotxe$Cambio <- as.factor (FitxerCotxe$Cambio)
+FitxerCotxe$Combustible <- as.factor(FitxerCotxe$Combustible)
+```
+
+**Variable 'Potencia'**
+
+Per a poder tratar la variable potència, ens quedarem amb la part numèrica i convertirem a integer:
+
+```{r}
+#Convertirm la variable Motor i ens quedem sols amb la part numèrcia de KW
+FitxerCotxe$Potencia<-str_extract(FitxerCotxe$Potencia,"\\d+")
+FitxerCotxe$Potencia <- as.integer(FitxerCotxe$Potencia)
+```
+
+**Variable 'Año' y creació AnyTran**
+
+La variable Año la convertim a data. Per altra banda, calcularem un nou atribut'AnyTran' que representarà l'antiguetat del cotxe. 
+
+
+```{r}
+#Any actual
+this_day <- today()
+Any_actual<- year(this_day)
+#Any del cotxe
+AnyCoche<-substr(FitxerCotxe$Año, start = 4, stop = 8)  
+AnyCoche<-as.integer(AnyCoche)
+#Any
+FitxerCotxe$Año <- make_date(year = str_extract(FitxerCotxe$Año, "....$"), month = str_extract(FitxerCotxe$Año, "^.."))
+#Anys transcurrits
+FitxerCotxe$AnyTran<-Any_actual-AnyCoche
+```
+
+**Variable 'Kilometraje'**
+
+La variable kilometraje R l'interpreta tipo char, perquè té punts en el nombre.
+La convertim a integer i multipliquem * 1000
+
+```{r}
+#kilometres; convertimos a Kms
+FitxerCotxe$Kilometraje <- as.integer (FitxerCotxe$Kilometraje*1000)
+```
+
+
+**Variable 'Ciudad'**
+
+Modifiquem variable Ciudad a código Postal Provincial (xx)
+
+```{r}
+FitxerCotxe[, "Ciudad"] = str_extract(FitxerCotxe$Ciudad, "^..")
+FitxerCotxe$Ciudad <- as.factor(FitxerCotxe$Ciudad)
+```
+
+
+## 2.3.4 Valors perduts
+
+Al fitxer, hem observat que le variables 'Versión' i 'cambio' està informat amb valors perduts no estandarditzat. 
+Convertirem a NA els valors desconeguts d'aquetes variables Versión (n/a) y Cambio (-/-) i reconvertim a factor. 
+
+```{r}
+FitxerCotxe[FitxerCotxe$Version == "n/a", "Version"] = NA
+FitxerCotxe$Version <- as.factor (FitxerCotxe$Version)
+FitxerCotxe[(str_which(FitxerCotxe$Cambio, "-/-")), "Cambio"] = NA
+```
+
+Verifiquem valors perduts al fitxer
+```{r}
+#Comprovem valors perduts
+ValorsPerduts <- colSums(is.na(FitxerCotxe))
+ValorsPerduts
+```
+
+Verifiquem que no hi ha registres duplicats.
+Si fem un distinct sota tot els registres i el nombre de files és igual, no hi tenim duplicats
+```{r}
+#Verifiquem si hi ha  registres duplicats
+#Files
+nrow(FitxerCotxe)
+#Files diferents
+count(distinct(FitxerCotxe))
+```
+
+
+
+## 2.3.5 Tractament de valors extrems: Variables Potencia
+
+
+```{r}
+#Kilometratge
+boxplot.stats(FitxerCotxe$Kilometraje)$out
+#Potencia
+boxplot.stats(FitxerCotxe$Potencia)$out
+```
+
+A les files 256 y 257 s'observa que hi ha potencias informades a 1.
+Aquest valor s'interpreta com un error i eliminarem aquestes files del fitxer. 
+A les altres dades no farem cap tractament, son dades completament normals en característiques de cotxes de segona ma.
+
+```{r}
+#El valor de potencia 1 el considerem com a un error.
+#Eliminarem els registres amb els outliers de potencia 1 . Els considerem erronis:
+FitxerCotxe<-FitxerCotxe[FitxerCotxe$Potencia!=1,]
+#Verifiquem la mitjana de potencia
+mean(FitxerCotxe$Potencia)
+```
+
+## 2.3.6 Exportació de les dades preprocessades
+
+
+Guardem a fitxer les dades processades:
+
+```{r}
+FAP <- subset(FitxerCotxe)
+write.csv(FitxerCotxe, "FAP.csv")
+```
+
+
+Per a l'anàlisi de dades que volem realitzar es necessari fer unaagrupaió per tipus de combustible:
+```{r}
+# 4.1. Agrupación por tipo de combustible
+FAP_d <- FAP[FAP$Combustible == "D",] 
+FAP_g <- FAP[FAP$Combustible == "G",]
+```
+
+
+
+# 2.4 Anàlisi de dades
+## 2.4.1 Normalitat
+Realitzem el test de normalitat Anderson-Darling amb al funció ad.test() de R. 
+En aquest test es comprovarà si amb un nivell de significació de 0,05, les variables que observem, compleixen normalitat
+```{r}
+ad.test(FAP$Precio) 
+ad.test(FAP$Kilometraje) 
+ad.test(FAP$Potencia) 
+ad.test(FAP$AnyTran)           
+```
+
+s'observa que la variable 'kilometraje' segueix una distribució normal perquè el p-valor > 0,05.
+
+## 2.4.2 Homegeneitat
+Homogeneïtat en la variança (HOMOCEDASTICIDAD)
+Per a mostres no normals vPreu
+```{r}
+fligner.test(x = list(FAP_d$Precio,FAP_g$Precio))
+```
+Como P-Valor > 0.05 --> Aceptem la hipòtesis que les dos mostres son homogènies.
+
+
+
+# 2.4.3  Existeix diferència en el preu dels A3s Gasolina i els Dièsel?
+
+Per a realitzar aquest estudi utilitzarem un test de hipòtesi.
+
+Concretament, utilitzarem un contrast de Hipòtesis bilateral. 
+Les dades sòn independents, ordenables i proedents de mostres no normals i amb igualtat de vairances. 
+
+Hipòtesi nula: Les dues mitjanes hi sòn iguals
+
+H0: Mu1=Mu2
+
+Hipotèsi alternativa: Les dues mitjanes sòn diferents
+
+H0:Mu1<>Mu2
+
+
+Primerament, representem les dades amb un bloxpot:
+
+
+```{r}
+CH_pd <- subset (FAP, Combustible == "D", select = "Precio")
+CH_pg <- subset (FAP, Combustible == "G", select = "Precio") 
+boxplot(CH_pd$Precio,CH_pg$Precio,main="Diagrama de caja de Precio Gasolina/Diesel",names=c("Diesel","Gasolina"))
+```
+
+
+
+
+La diferència de mitjanes no serà molt amplia, segons ens indica el diagrama de caixes.
+Però continuarem amb l'estudi per a certificar-ho:
+
+Apliquem el test no paramètric Mann–Whitney–Wilcoxon per a resoldre el contrast de hipòtesi perquè les variables no presenten una distribuó normal:
+```{r}
+wilcox.test(x = CH_pd$Precio, y = CH_pg$Precio, alternative = "two.sided", mu = 0,
+            paired = FALSE, conf.int = 0.95)
+```
+
+
+Una vegada aplicat la funció, veiem que el p-value > 0.05, i per tant, no es rebutja la hipòtesi nula.
+**Conclusió**: NO hi ha diferèncias significativas entre els preus dels vehiles diesel i gasolina. 
+
+Fet també observat comparant els diagrames de caixes. 
+
+
+# 2.4.4 Quines variables quantitatives i qualitatives influeixen en el preu? 
+
+
+Estudiarem la relació de les variables quantitatives amb el preu. 
+En concret, de les variables Kilometraje, Potencia i els anys del cotxe.
+
+Realitzem la representació gràfica:
+
+```{r}
+par(mfrow=c(1,3))
+plot( FitxerCotxe$Precio ~ FitxerCotxe$Potencia, main="Preu vs Potencia")
+plot( FitxerCotxe$Precio ~ FitxerCotxe$Kilometraje, main="Preu vs Kilometratge" )
+plot( FitxerCotxe$Precio ~ FitxerCotxe$AnyTran, main="Preu vs Anys del cotxe" )
+```
+
+Verifiquem la correlació
+
+```{r}
+cor( FitxerCotxe[,c("Precio","Potencia","Kilometraje","AnyTran")]) 
+```
+Podem observar que en els cotxes de segona ma A3, aparentment, no influeix tant la potència amb el preu. 
+El que mes influex negativament amb el preu, sóns els anys de antiguetat del cotxe. Amb una  correlació negativa >50%, podem indicar que el preu disminuex quant aumenta els anys del cotxe.
+
+El kilometratge influex menys d'un 50 percent, però també podem observar que el preu disminuex si aumenta el kilometratge.
+
+
+Realitzarem un model de regressió amb les variables quantitatives i qualitatives. I un altre nomès amb les quantitatives. Prèviament, deduim de les correlacions observades, que no hi ha multicolinealitat amb les variables.
+```{r}
+Model1<- lm(Precio~AnyTran+Kilometraje+Potencia+Ciudad+Cambio+Combustible, data=FitxerCotxe) 
+summary(Model1)
+Model2<- lm(Precio~AnyTran+Kilometraje+Potencia, data=FitxerCotxe) 
+summary(Model2)
+```
+
+Les tres variables **qualitatives** practicament **NO** influeixen en el preu. De fet nomès mijora el coeficient de determinacio en 3 punts.
+
+
+Les tres variables **quantitatives** **SI** influeixen en el preu.El p valor és molt petit per a les 3 variables.
+
+
+#### **Conclusió1** 
+Les variables quantitatives com la Ciutat de procedència, el tipus de canvi o el combustible, no influeixen amb el preu.
+
+#### **Conclusió2** 
+
+Les varaibles que mes afecten a la disminució o augment del preu dels A3 de segona ma son les variables quantitatives potència, el kilometratge i anys de antiguetat. 
+
+El preu del cotxe augmenta quan es tracta d'un cotxe amb mes potència i disminueix quan es un cotxe mes antic o amb mes kilómetres.
+
+Recordem que es tracta de cotxes de segona ma, i per tant es una conclusió lògica.
+
+# 2.4.5 Predicció amb model de variables quantitatives.
+
+Amb el model que hem relitza a l'apartat anterior, volem conèixer quin seria el preu aproximat d'un cotxe amb 15 anys de antiguetat, uns 100000 km i potencia 110: 
+```{r}
+newdata = data.frame(AnyTran = 15, Kilometraje =100000, Potencia=160) 
+predict(Model2, newdata)
+```
+
+#### **Conclusió**
+Amb el model realitzat, podem conèixer de manera aproximada quin seria el preu del cotxes de A3 de segona, segons els anys de antiguetat,el kilometratge i la potència. 
+
+
+
+
+
