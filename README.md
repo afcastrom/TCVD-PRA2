@@ -28,7 +28,7 @@ El desarrollo del script se ha realizado en R y para su ejecución se necesita i
     
 ## Extración de Información
 
-   Se genera un fichero HTML como informe de salida
+   
    
    
 ## Integrantes   
